@@ -1,8 +1,9 @@
 /* Lauren's Journal — offline cache */
-var CACHE = 'lj-v2';
+var CACHE = 'lj-v3';
 var ASSETS = [
   './',
   './index.html',
+  './vendor-supabase.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',

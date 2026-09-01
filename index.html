@@ -170,12 +170,6 @@
   .cell.scored .num{color:rgba(16,14,8,.62);font-weight:700}
   .cell.future{background:var(--cell-future)}
   .cell.future .num{color:var(--cell-future-ink)}
-  .cell .scroll-ic{
-    position:absolute;top:5px;right:5px;
-    width:12px;height:12px;
-    color:var(--cell-empty-ink);
-  }
-  .cell.scored .scroll-ic{color:rgba(16,14,8,.5)}
   .cell .summ{
     position:absolute;left:3px;right:3px;top:17px;bottom:3px;
     font-size:clamp(6.5px,1.85vw,9.5px);
@@ -211,9 +205,15 @@
   /* ---------- footer ---------- */
   .foot{
     margin-top:18px;
-    display:flex;justify-content:center;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
     padding-bottom:6px;
   }
+  .account-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:center}
+  .account-row[hidden]{display:none}
+  .acct-email{font-size:13px;color:var(--muted)}
+  .linkish.accent{color:var(--accent)}
+  .sync-status{font-size:12px;color:var(--muted)}
+  .sync-status[hidden]{display:none}
   .linkish{
     font-size:13px;color:var(--muted);
     text-decoration:underline;text-underline-offset:3px;
@@ -273,15 +273,6 @@
   .r-main{flex:1;min-width:0}
   .r-date{font-size:13px;font-weight:700;color:var(--ink)}
   .r-date .r-dow{color:var(--muted);font-weight:600}
-  .r-summ{
-    font-size:14px;font-weight:600;color:var(--ink);
-    margin-top:3px;
-    overflow-wrap:break-word;
-  }
-  .r-summ mark{
-    background:var(--accent-soft);color:var(--ink);
-    border-radius:3px;padding:0 1px;
-  }
   .r-snippet{
     font-size:14px;color:var(--muted);line-height:1.45;
     margin-top:3px;
@@ -383,27 +374,10 @@
   .clear-score{font-size:13px;color:var(--muted);padding:4px 6px;text-decoration:underline;text-underline-offset:3px}
   .clear-score[hidden]{display:none}
 
-  .summary-wrap{position:relative;margin-top:14px}
-  .summary-wrap input{
-    width:100%;
-    padding:12px 62px 12px 14px;
-    border:1px solid var(--hairline);
-    border-radius:12px;
-    background:var(--bg);color:var(--ink);
-    font-family:var(--ui);font-size:16px;
-  }
-  .summary-wrap input::placeholder{color:var(--muted)}
-  .char-count{
-    position:absolute;right:13px;top:50%;transform:translateY(-50%);
-    font-size:11px;color:var(--muted);font-weight:600;
-    font-variant-numeric:tabular-nums;
-    pointer-events:none;
-  }
-
   textarea{
     width:100%;
     min-height:130px;
-    margin-top:10px;
+    margin-top:16px;
     padding:13px 14px;
     border:1px solid var(--hairline);
     border-radius:14px;
@@ -449,6 +423,24 @@
     border:1px solid var(--hairline);
   }
   .modal-btns .primary-sm{background:var(--accent);color:var(--bg);border-color:transparent}
+  .auth-input{
+    width:100%;margin-top:12px;
+    padding:12px 14px;
+    border:1px solid var(--hairline);border-radius:12px;
+    background:var(--bg);color:var(--ink);
+    font-family:var(--ui);font-size:16px;
+  }
+  .auth-input::placeholder{color:var(--muted)}
+  .auth-input[hidden]{display:none}
+  .auth-error{
+    margin-top:10px;font-size:13px;color:var(--danger);line-height:1.4;
+  }
+  .auth-links{
+    display:flex;justify-content:space-between;flex-wrap:wrap;
+    margin-top:8px;
+  }
+  .auth-links .linkish{padding:6px 2px;font-size:12.5px}
+  .auth-links .linkish[hidden]{display:none}
 
   /* ---------- toast ---------- */
   .toast{
@@ -496,6 +488,8 @@
   <main class="grid" id="grid" aria-label="Calendar"></main>
 
   <footer class="foot">
+    <div class="account-row" id="accountRow"></div>
+    <div class="sync-status" id="syncStatus" hidden></div>
     <button class="linkish" id="backupBtn">Back up or restore</button>
   </footer>
 </div>
@@ -528,17 +522,30 @@
     <div class="clear-row"><button class="clear-score" id="clearScore" hidden>Clear score</button></div>
   </div>
 
-  <div class="summary-wrap">
-    <input type="text" id="summaryText" maxlength="50" placeholder="One-line summary&hellip;" autocomplete="off">
-    <span class="char-count" id="charCount">0/50</span>
-  </div>
-
   <textarea id="entryText" placeholder="Write about the day&hellip;" rows="5"></textarea>
 
   <div class="sheet-actions">
     <button class="primary" id="saveBtn">Save</button>
   </div>
 </section>
+
+<div class="modal" id="authModal" hidden>
+  <div class="modal-card">
+    <h3 id="authTitle">Sign in</h3>
+    <p id="authSub">Your journal syncs privately across all your devices.</p>
+    <input type="email" id="authEmail" class="auth-input" placeholder="Email" autocomplete="email" autocapitalize="off">
+    <input type="password" id="authPass" class="auth-input" placeholder="Password" autocomplete="current-password">
+    <div class="auth-error" id="authError" hidden></div>
+    <div class="modal-btns">
+      <button id="authGo" class="primary-sm">Sign in</button>
+      <button id="authCancel">Cancel</button>
+    </div>
+    <div class="auth-links">
+      <button class="linkish" id="authSwitch">New here? Create an account</button>
+      <button class="linkish" id="authForgot">Forgot password?</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal" id="backupModal" hidden>
   <div class="modal-card">
@@ -555,6 +562,7 @@
 
 <div class="toast" id="toast" role="status"></div>
 
+<script src="vendor-supabase.js"></script>
 <script>
 (function(){
   'use strict';
@@ -564,14 +572,27 @@
   var DOWS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   var SCORE_WORDS = {1:'Awful',2:'Very bad',3:'Bad',4:'Meh',5:'Okay',6:'Fine',7:'Good',8:'Very good',9:'Great',10:'Amazing'};
 
-  var SCROLL_SVG = '<svg class="scroll-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>';
-
   function loadEntries(){
     try{
       var raw = localStorage.getItem(STORE_KEY);
       if(!raw) return {};
       var data = JSON.parse(raw);
-      return (data && typeof data === 'object') ? data : {};
+      if(!data || typeof data !== 'object') return {};
+      // fold summaries from the retired summary field into the entry text,
+      // and stamp legacy records with a sync timestamp
+      var changed = false;
+      for(var k in data){
+        var v = data[k];
+        if(!v || typeof v !== 'object') continue;
+        if(v.m){
+          if(!v.t) v.t = v.m;
+          delete v.m;
+          changed = true;
+        }
+        if(typeof v.u !== 'number'){ v.u = Date.now(); changed = true; }
+      }
+      if(changed) localStorage.setItem(STORE_KEY, JSON.stringify(data));
+      return data;
     }catch(e){ return {}; }
   }
   function saveEntries(){
@@ -584,7 +605,7 @@
   var view = { y: now.getFullYear(), m: now.getMonth() };
   var todayKey = keyOf(now);
   var selectedKey = null;
-  var pending = { s:null, t:'', m:'' };
+  var pending = { s:null, t:'' };
 
   function keyOf(d){
     return d.getFullYear() + '-' +
@@ -602,7 +623,6 @@
   var grid = $('grid'), sheet = $('sheet'), backdrop = $('backdrop');
   var slider = $('scoreSlider'), readout = $('scoreReadout'), scoreWord = $('scoreWord');
   var entryText = $('entryText'), clearBtn = $('clearScore');
-  var summaryText = $('summaryText'), charCount = $('charCount');
 
   /* ---------- calendar rendering ---------- */
   function render(){
@@ -635,15 +655,15 @@
       else if(isFuture){ cls += ' future'; }
       if(isToday){ cls += ' today'; if(!hasScore) cls += ' awaiting'; }
 
-      var hasSumm = e && e.m && e.m.trim().length > 0;
       var inner = '<span class="num">' + d + '</span>';
-      if(hasText) inner += SCROLL_SVG;
-      if(hasSumm) inner += '<span class="summ">' + escHtml(e.m) + '</span>';
+      if(hasText){
+        var preview = e.t.trim().slice(0, 50) + (e.t.trim().length > 50 ? '…' : '');
+        inner += '<span class="summ">' + escHtml(preview) + '</span>';
+      }
       if(isPast && !hasScore) inner += '<span class="bang" aria-hidden="true">!</span>';
 
       var label = MONTHS[view.m] + ' ' + d +
         (hasScore ? ', scored ' + e.s : ', no score') +
-        (hasSumm ? ', ' + e.m : '') +
         (hasText ? ', has entry' : '');
       html += '<button class="' + cls + '"' + style + ' data-key="' + key + '" aria-label="' + escHtml(label) + '">' + inner + '</button>';
     }
@@ -703,9 +723,6 @@
     var e = entries[key] || {};
     pending.s = (typeof e.s === 'number') ? e.s : null;
     pending.t = e.t || '';
-    pending.m = e.m || '';
-    summaryText.value = pending.m;
-    charCount.textContent = pending.m.length + '/50';
 
     var parts = key.split('-');
     var d = new Date(+parts[0], +parts[1]-1, +parts[2]);
@@ -751,27 +768,28 @@
     syncScoreUI();
   });
   entryText.addEventListener('input', function(){ pending.t = entryText.value; });
-  summaryText.addEventListener('input', function(){
-    pending.m = summaryText.value.slice(0, 50);
-    charCount.textContent = pending.m.length + '/50';
-  });
 
   function commit(){
     if(!selectedKey) return;
     var text = entryText.value.trim();
-    var summ = summaryText.value.trim().slice(0, 50);
-    if(pending.s === null && !text && !summ){
+    var existed = !!entries[selectedKey];
+    if(pending.s === null && !text){
+      if(!existed){ return; }
       delete entries[selectedKey];
+      tombstones[selectedKey] = Date.now();
+      saveTombstones();
     }else{
-      var rec = {};
+      var rec = { u: Date.now() };
       if(pending.s !== null) rec.s = pending.s;
       if(text) rec.t = text;
-      if(summ) rec.m = summ;
       entries[selectedKey] = rec;
+      delete tombstones[selectedKey];
+      saveTombstones();
     }
     saveEntries();
     render();
     if(searchView && !searchView.hidden) runSearch();
+    queuePush(selectedKey);
   }
 
   function closeSheet(save){
@@ -824,14 +842,21 @@
       var rec = {};
       if(typeof v.s === 'number' && v.s >= 1 && v.s <= 10) rec.s = Math.round(v.s);
       if(typeof v.t === 'string' && v.t.trim()) rec.t = v.t;
-      if(typeof v.m === 'string' && v.m.trim()) rec.m = v.m.trim().slice(0, 50);
-      if(rec.s !== undefined || rec.t !== undefined || rec.m !== undefined){ clean[k] = rec; count++; }
+      else if(typeof v.m === 'string' && v.m.trim()) rec.t = v.m.trim();
+      if(rec.s !== undefined || rec.t !== undefined){ clean[k] = rec; count++; }
     }
     if(!count){ showToast('No entries found in that backup'); return; }
     if(!window.confirm('Import ' + count + ' day(s)? They will be merged in; imported days replace existing ones.')) return;
-    for(var k2 in clean) entries[k2] = clean[k2];
+    for(var k2 in clean){
+      clean[k2].u = Date.now();
+      entries[k2] = clean[k2];
+      delete tombstones[k2];
+      queuePush(k2, true);
+    }
+    saveTombstones();
     saveEntries();
     render();
+    flushQueue();
     backupModal.hidden = true;
     showToast('Imported ' + count + ' day(s)');
   });
@@ -895,8 +920,8 @@
     var terms = q.split(/\s+/).filter(Boolean);
     var keys = Object.keys(entries).filter(function(k){
       var e = entries[k];
-      if(!e.t && !e.m) return false;
-      var lower = ((e.t || '') + '\n' + (e.m || '')).toLowerCase();
+      if(!e.t) return false;
+      var lower = e.t.toLowerCase();
       return terms.every(function(t){ return lower.indexOf(t) !== -1; });
     }).sort().reverse();
 
@@ -912,12 +937,11 @@
       var chip = hasScore
         ? '<div class="r-score" style="background:' + scoreColor(e.s) + '">' + e.s + '</div>'
         : '<div class="r-score unscored">–</div>';
-      var snips = e.t ? sentencesWith(e.t, terms).map(function(sn){ return highlight(sn, terms); }).join(' <span style="opacity:.5">·</span> ') : '';
-      var summLine = e.m ? '<div class="r-summ">' + highlight(e.m, terms) + '</div>' : '';
+      var snips = sentencesWith(e.t, terms).map(function(sn){ return highlight(sn, terms); }).join(' <span style="opacity:.5">·</span> ');
       return '<button class="result" data-key="' + k + '">' + chip +
         '<div class="r-main"><div class="r-date">' + MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() +
-        ' <span class="r-dow">· ' + DOWS[d.getDay()] + '</span></div>' + summLine +
-        (snips ? '<div class="r-snippet">' + snips + '</div>' : '') + '</div></button>';
+        ' <span class="r-dow">· ' + DOWS[d.getDay()] + '</span></div>' +
+        '<div class="r-snippet">' + snips + '</div></div></button>';
     }).join('');
     searchResults.innerHTML = html;
   }
@@ -956,9 +980,210 @@
     toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1900);
   }
 
-  /* re-render when the app resumes on a new day */
+  /* ---------- account & sync (Supabase) ---------- */
+  var SB_URL = 'https://iskaqqzjbivyoihbedjm.supabase.co';
+  var SB_KEY = 'sb_publishable_uJXyr-w4HPlJ8PwTngrwtw_dvXAuZ5d';
+  var LOCAL_ONLY = (typeof window.supabase === 'undefined');
+
+  var TOMB_KEY = 'lj.tomb.v1', QUEUE_KEY = 'lj.queue.v1';
+  function loadJson(key, fallback){
+    try{ var v = JSON.parse(localStorage.getItem(key)); return v || fallback; }
+    catch(e){ return fallback; }
+  }
+  var tombstones = loadJson(TOMB_KEY, {});
+  var pushQueue = loadJson(QUEUE_KEY, []);
+  function saveTombstones(){ try{ localStorage.setItem(TOMB_KEY, JSON.stringify(tombstones)); }catch(e){} }
+  function saveQueue(){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(pushQueue)); }catch(e){} }
+
+  var sb = null, sbUser = null, syncing = false, flushing = false;
+  var accountRow = $('accountRow'), syncStatus = $('syncStatus');
+  var authModal = $('authModal'), authMode = 'signin';
+
+  function setStatus(msg){
+    if(!sbUser || !msg){ syncStatus.hidden = true; return; }
+    syncStatus.hidden = false;
+    syncStatus.textContent = msg;
+  }
+
+  function queuePush(key, skipFlush){
+    if(LOCAL_ONLY || !sbUser) return;
+    if(pushQueue.indexOf(key) === -1) pushQueue.push(key);
+    saveQueue();
+    if(!skipFlush) flushQueue();
+  }
+
+  function rowFor(key){
+    var e = entries[key];
+    if(e) return { user_id: sbUser.id, day: key,
+      s: (typeof e.s === 'number') ? e.s : null,
+      t: e.t || null, u: e.u || 0, deleted: false };
+    return { user_id: sbUser.id, day: key, s: null, t: null,
+      u: tombstones[key] || Date.now(), deleted: true };
+  }
+
+  function flushQueue(){
+    if(LOCAL_ONLY || !sbUser || flushing || !pushQueue.length) return Promise.resolve();
+    flushing = true;
+    setStatus('Syncing…');
+    var batch = pushQueue.slice();
+    return sb.from('entries').upsert(batch.map(rowFor)).then(function(res){
+      flushing = false;
+      if(res.error){ setStatus('Offline — changes saved on this device'); return; }
+      pushQueue = pushQueue.filter(function(k){ return batch.indexOf(k) === -1; });
+      saveQueue();
+      if(pushQueue.length) return flushQueue();
+      setStatus('Synced');
+    }, function(){
+      flushing = false;
+      setStatus('Offline — changes saved on this device');
+    });
+  }
+
+  var lastSync = 0;
+  function fullSync(force){
+    if(LOCAL_ONLY || !sbUser || syncing) return;
+    if(!force && Date.now() - lastSync < 5000) return;
+    syncing = true;
+    setStatus('Syncing…');
+    flushQueue().then(function(){
+      return sb.from('entries').select('day,s,t,u,deleted');
+    }).then(function(res){
+      syncing = false;
+      if(!res || res.error){ setStatus('Offline — changes saved on this device'); return; }
+      lastSync = Date.now();
+      var remoteDays = {};
+      var changed = false;
+      res.data.forEach(function(row){
+        remoteDays[row.day] = true;
+        var local = entries[row.day];
+        var localU = local ? (local.u || 0) : 0;
+        var tombU = tombstones[row.day] || 0;
+        if(row.deleted){
+          if(local && localU > row.u){ queuePush(row.day, true); }
+          else if(local){ delete entries[row.day]; tombstones[row.day] = row.u; changed = true; }
+          else if(tombU < row.u){ tombstones[row.day] = row.u; }
+        }else{
+          if(tombU > row.u){ queuePush(row.day, true); }
+          else if(!local || row.u > localU){
+            var rec = { u: row.u };
+            if(typeof row.s === 'number') rec.s = row.s;
+            if(row.t) rec.t = row.t;
+            entries[row.day] = rec;
+            delete tombstones[row.day];
+            changed = true;
+          }else if(localU > row.u){ queuePush(row.day, true); }
+        }
+      });
+      for(var k in entries){ if(!remoteDays[k]) queuePush(k, true); }
+      saveTombstones();
+      if(changed){ saveEntries(); render(); if(searchView && !searchView.hidden) runSearch(); }
+      flushQueue().then(function(){ if(!pushQueue.length) setStatus('Synced'); });
+    }, function(){ syncing = false; setStatus('Offline — changes saved on this device'); });
+  }
+
+  /* ----- account UI ----- */
+  function renderAccountUI(){
+    if(LOCAL_ONLY){ accountRow.hidden = true; setStatus(null); return; }
+    if(sbUser){
+      accountRow.innerHTML = '<span class="acct-email">' + escHtml(sbUser.email || '') + '</span>' +
+        '<button class="linkish" id="signOutBtn">Sign out</button>';
+      $('signOutBtn').addEventListener('click', function(){
+        sb.auth.signOut();
+        showToast('Signed out — entries stay on this device');
+      });
+    }else{
+      accountRow.innerHTML = '<button class="linkish accent" id="signInBtn">Sign in to sync across devices</button>';
+      $('signInBtn').addEventListener('click', function(){ openAuth('signin'); });
+      setStatus(null);
+    }
+  }
+
+  function openAuth(mode){
+    authMode = mode;
+    $('authError').hidden = true;
+    $('authEmail').hidden = (mode === 'newpass');
+    $('authPass').value = '';
+    if(mode === 'signin'){
+      $('authTitle').textContent = 'Sign in';
+      $('authSub').textContent = 'Your journal syncs privately across all your devices.';
+      $('authGo').textContent = 'Sign in';
+      $('authPass').setAttribute('autocomplete','current-password');
+      $('authSwitch').textContent = 'New here? Create an account';
+      $('authSwitch').hidden = false; $('authForgot').hidden = false;
+    }else if(mode === 'signup'){
+      $('authTitle').textContent = 'Create account';
+      $('authSub').textContent = 'One account, all your devices. Password must be at least 6 characters.';
+      $('authGo').textContent = 'Create account';
+      $('authPass').setAttribute('autocomplete','new-password');
+      $('authSwitch').textContent = 'Already have an account? Sign in';
+      $('authSwitch').hidden = false; $('authForgot').hidden = true;
+    }else{
+      $('authTitle').textContent = 'Set a new password';
+      $('authSub').textContent = 'Enter a new password for your account.';
+      $('authGo').textContent = 'Set new password';
+      $('authPass').setAttribute('autocomplete','new-password');
+      $('authSwitch').hidden = true; $('authForgot').hidden = true;
+    }
+    authModal.hidden = false;
+  }
+
+  function authFail(msg){
+    var el = $('authError');
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
+  if(!LOCAL_ONLY){
+    sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+    sb.auth.onAuthStateChange(function(event, session){
+      var wasUser = sbUser;
+      sbUser = session ? session.user : null;
+      renderAccountUI();
+      if(event === 'PASSWORD_RECOVERY'){ openAuth('newpass'); return; }
+      if(sbUser && !wasUser){ fullSync(true); }
+    });
+
+    $('authCancel').addEventListener('click', function(){ authModal.hidden = true; });
+    authModal.addEventListener('click', function(ev){ if(ev.target === authModal) authModal.hidden = true; });
+    $('authSwitch').addEventListener('click', function(){
+      openAuth(authMode === 'signin' ? 'signup' : 'signin');
+    });
+    $('authForgot').addEventListener('click', function(){
+      var email = $('authEmail').value.trim();
+      if(!email){ authFail('Enter your email above first, then tap Forgot password.'); return; }
+      sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://atpick3.github.io/laurens-journal/' }).then(function(res){
+        if(res.error) authFail(res.error.message);
+        else{ authModal.hidden = true; showToast('Password reset email sent'); }
+      });
+    });
+    $('authGo').addEventListener('click', function(){
+      var email = $('authEmail').value.trim();
+      var pass = $('authPass').value;
+      $('authError').hidden = true;
+      if(authMode !== 'newpass' && !email){ authFail('Enter your email.'); return; }
+      if(!pass || pass.length < 6){ authFail('Password must be at least 6 characters.'); return; }
+      $('authGo').disabled = true;
+      var done = function(res){
+        $('authGo').disabled = false;
+        if(res.error){ authFail(res.error.message); return; }
+        authModal.hidden = true;
+        showToast(authMode === 'signup' ? 'Account created' : authMode === 'newpass' ? 'Password updated' : 'Signed in');
+      };
+      if(authMode === 'signin') sb.auth.signInWithPassword({ email: email, password: pass }).then(done);
+      else if(authMode === 'signup') sb.auth.signUp({ email: email, password: pass }).then(done);
+      else sb.auth.updateUser({ password: pass }).then(done);
+    });
+
+    window.addEventListener('online', function(){ fullSync(); });
+  }
+  renderAccountUI();
+
+  /* re-render when the app resumes on a new day; pull fresh entries too */
   document.addEventListener('visibilitychange', function(){
-    if(!document.hidden && keyOf(new Date()) !== todayKey) render();
+    if(document.hidden) return;
+    if(keyOf(new Date()) !== todayKey) render();
+    fullSync();
   });
 
   render();
