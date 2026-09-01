@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lauren&rsquo;s Journal</title>
+<meta name="description" content="A daily journal with a color-coded calendar.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lauren&rsquo;s Journal">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F6F4EF">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#14151B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+  :root{
+    --bg:#F6F4EF;
+    --surface:#FFFFFF;
+    --ink:#21252F;
+    --muted:#8C90A0;
+    --hairline:#E7E3DA;
+    --accent:#3D4EB0;
+    --accent-soft:rgba(61,78,176,.28);
+    --danger:#DF3B3B;
+    --cell-empty:#ECEAE2;
+    --cell-empty-ink:#A8ACB8;
+    --cell-future:#F1EFE8;
+    --cell-future-ink:#C4C7CF;
+    --sheet-shadow:0 -18px 50px rgba(25,28,45,.22);
+    --scrim:rgba(20,22,32,.42);
+    --thumb-unset:#B9BCC7;
+    --display:ui-serif,"New York",Georgia,"Times New Roman",serif;
+    --ui:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14151B;
+      --surface:#1F212B;
+      --ink:#EDEEF3;
+      --muted:#787E8D;
+      --hairline:#2B2E39;
+      --accent:#93A2FF;
+      --accent-soft:rgba(147,162,255,.32);
+      --danger:#FF5F5F;
+      --cell-empty:#20222C;
+      --cell-empty-ink:#5B6070;
+      --cell-future:#1A1C24;
+      --cell-future-ink:#3E4250;
+      --sheet-shadow:0 -18px 50px rgba(0,0,0,.55);
+      --scrim:rgba(0,0,0,.55);
+      --thumb-unset:#4A4E5C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#14151B;
+    --surface:#1F212B;
+    --ink:#EDEEF3;
+    --muted:#787E8D;
+    --hairline:#2B2E39;
+    --accent:#93A2FF;
+    --accent-soft:rgba(147,162,255,.32);
+    --danger:#FF5F5F;
+    --cell-empty:#20222C;
+    --cell-empty-ink:#5B6070;
+    --cell-future:#1A1C24;
+    --cell-future-ink:#3E4250;
+    --sheet-shadow:0 -18px 50px rgba(0,0,0,.55);
+    --scrim:rgba(0,0,0,.55);
+    --thumb-unset:#4A4E5C;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--ui);
+    min-height:100dvh;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    padding:calc(env(safe-area-inset-top, 0px) + 10px)
+            calc(env(safe-area-inset-right, 0px))
+            calc(env(safe-area-inset-bottom, 0px) + 8px)
+            calc(env(safe-area-inset-left, 0px));
+  }
+  .shell{max-width:560px;margin:0 auto;padding:0 14px}
+
+  button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--accent); outline-offset:2px;
+  }
+
+  /* ---------- header ---------- */
+  .top-row{display:flex;align-items:center}
+  .top-spacer{width:40px;flex-shrink:0}
+  .wordmark{
+    font-family:var(--display);
+    font-style:italic;
+    font-size:15px;
+    color:var(--muted);
+    text-align:center;
+    letter-spacing:.02em;
+    flex:1;
+  }
+  .search-btn{
+    width:40px;height:40px;border-radius:12px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--muted);
+  }
+  .search-btn svg{width:19px;height:19px}
+  .search-btn:active{background:var(--accent-soft);color:var(--accent)}
+  .month-row{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:2px;
+  }
+  .month-title{
+    font-family:var(--display);
+    font-size:clamp(28px,8vw,34px);
+    font-weight:600;
+    letter-spacing:-.01em;
+    text-wrap:balance;
+    text-align:center;
+    flex:1;
+    line-height:1.15;
+  }
+  .month-title .yr{color:var(--muted);font-weight:400;margin-left:.25em}
+  .nav{
+    width:44px;height:44px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--accent);
+  }
+  .nav:active{background:var(--accent-soft)}
+  .nav svg{width:22px;height:22px}
+  .today-row{height:30px;display:flex;justify-content:center;align-items:center}
+  .today-pill{
+    font-size:13px;font-weight:600;color:var(--accent);
+    border:1px solid var(--accent-soft);
+    padding:3px 14px;border-radius:999px;
+  }
+  .today-pill[hidden]{display:none}
+
+  /* ---------- calendar ---------- */
+  .weekdays{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:6px;
+    margin-top:2px;
+    font-size:11px;font-weight:600;letter-spacing:.08em;
+    color:var(--muted);text-align:center;text-transform:uppercase;
+  }
+  .grid{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:6px;
+    margin-top:8px;
+  }
+  .cell{
+    position:relative;
+    aspect-ratio:1/1.3;
+    border-radius:11px;
+    background:var(--cell-empty);
+    -webkit-user-select:none;user-select:none;
+  }
+  .cell.blank{visibility:hidden;pointer-events:none}
+  .cell .num{
+    position:absolute;top:5px;left:7px;
+    font-size:12px;font-weight:600;
+    font-variant-numeric:tabular-nums;
+    color:var(--cell-empty-ink);
+  }
+  .cell.scored .num{color:rgba(16,14,8,.62);font-weight:700}
+  .cell.future{background:var(--cell-future)}
+  .cell.future .num{color:var(--cell-future-ink)}
+  .cell .scroll-ic{
+    position:absolute;top:5px;right:5px;
+    width:12px;height:12px;
+    color:var(--cell-empty-ink);
+  }
+  .cell.scored .scroll-ic{color:rgba(16,14,8,.5)}
+  .cell .summ{
+    position:absolute;left:3px;right:3px;top:17px;bottom:3px;
+    font-size:clamp(6.5px,1.85vw,9.5px);
+    line-height:1.22;font-weight:600;
+    color:var(--muted);
+    text-align:left;
+    overflow:hidden;
+    overflow-wrap:anywhere;word-break:break-word;
+  }
+  .cell .summ.long{font-size:clamp(5.8px,1.62vw,8.5px)}
+  .cell .summ.xlong{font-size:clamp(5.2px,1.45vw,7.6px)}
+  .cell .summ.xxlong{font-size:clamp(4.6px,1.28vw,6.8px)}
+  .cell.scored .summ{color:rgba(16,14,8,.72)}
+  .cell.future .summ{color:var(--cell-future-ink)}
+  .cell .bang{
+    position:absolute;left:0;right:0;bottom:6%;
+    text-align:center;
+    font-size:clamp(15px,4.6vw,19px);
+    font-weight:800;
+    color:var(--danger);
+    line-height:1;
+  }
+  .cell.today{
+    box-shadow:0 0 0 2px var(--accent);
+  }
+  .cell.today.awaiting{
+    background:var(--surface);
+    box-shadow:0 0 0 2.5px var(--accent), 0 6px 18px var(--accent-soft);
+  }
+  .cell.today.awaiting .num{color:var(--accent);font-weight:800}
+  .cell:not(.blank):active{transform:scale(.94);transition:transform .08s ease}
+
+  /* ---------- footer ---------- */
+  .foot{
+    margin-top:18px;
+    display:flex;justify-content:center;
+    padding-bottom:6px;
+  }
+  .linkish{
+    font-size:13px;color:var(--muted);
+    text-decoration:underline;text-underline-offset:3px;
+    padding:8px 12px;
+  }
+
+  /* ---------- search ---------- */
+  .search-view{
+    position:fixed;inset:0;z-index:45;
+    background:var(--bg);
+    display:flex;flex-direction:column;
+    padding:calc(env(safe-area-inset-top, 0px) + 10px)
+            calc(env(safe-area-inset-right, 0px) + 14px)
+            env(safe-area-inset-bottom, 0px)
+            calc(env(safe-area-inset-left, 0px) + 14px);
+  }
+  .search-view[hidden]{display:none}
+  .search-bar{
+    display:flex;align-items:center;gap:8px;
+    max-width:560px;width:100%;margin:0 auto;
+  }
+  .search-bar input{
+    flex:1;min-width:0;
+    -webkit-appearance:none;appearance:none;
+    border:1px solid var(--hairline);
+    background:var(--surface);color:var(--ink);
+    font-family:var(--ui);font-size:16px;
+    padding:11px 16px;border-radius:999px;
+  }
+  .search-bar input::placeholder{color:var(--muted)}
+  .search-results{
+    flex:1;overflow-y:auto;overscroll-behavior:contain;
+    max-width:560px;width:100%;margin:0 auto;
+    padding:14px 0 30px;
+  }
+  .search-hint{
+    text-align:center;color:var(--muted);
+    font-size:14px;line-height:1.5;
+    padding:40px 30px;
+  }
+  .result{
+    display:flex;gap:12px;align-items:flex-start;
+    width:100%;text-align:left;
+    padding:13px 4px;
+    border-bottom:1px solid var(--hairline);
+  }
+  .result:active{background:var(--accent-soft);border-radius:12px}
+  .r-score{
+    width:34px;height:34px;border-radius:50%;flex-shrink:0;
+    background:var(--cell-empty);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:800;color:rgba(16,14,8,.65);
+    font-variant-numeric:tabular-nums;
+    margin-top:2px;
+  }
+  .r-score.unscored{color:var(--muted);font-weight:600}
+  .r-main{flex:1;min-width:0}
+  .r-date{font-size:13px;font-weight:700;color:var(--ink)}
+  .r-date .r-dow{color:var(--muted);font-weight:600}
+  .r-summ{
+    font-size:14px;font-weight:600;color:var(--ink);
+    margin-top:3px;
+    overflow-wrap:break-word;
+  }
+  .r-summ mark{
+    background:var(--accent-soft);color:var(--ink);
+    border-radius:3px;padding:0 1px;
+  }
+  .r-snippet{
+    font-size:14px;color:var(--muted);line-height:1.45;
+    margin-top:3px;
+    overflow-wrap:break-word;
+  }
+  .r-snippet mark{
+    background:var(--accent-soft);color:var(--ink);
+    border-radius:3px;padding:0 1px;
+  }
+
+  /* ---------- bottom sheet ---------- */
+  .backdrop{
+    position:fixed;inset:0;background:var(--scrim);
+    opacity:0;transition:opacity .28s ease;z-index:46;
+  }
+  .backdrop.show{opacity:1}
+  .backdrop[hidden]{display:none}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    max-width:560px;margin:0 auto;
+    background:var(--surface);
+    border-radius:22px 22px 0 0;
+    box-shadow:var(--sheet-shadow);
+    padding:10px 20px calc(env(safe-area-inset-bottom, 0px) + 18px);
+    transform:translateY(105%);
+    transition:transform .32s cubic-bezier(.32,.72,.28,1);
+    max-height:88dvh;overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .sheet.show{transform:translateY(0)}
+  .sheet[hidden]{display:none}
+  .grip{width:38px;height:4.5px;border-radius:3px;background:var(--hairline);margin:2px auto 12px}
+  .sheet-dow{
+    font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent);
+  }
+  .sheet-date{
+    font-family:var(--display);
+    font-size:27px;font-weight:600;letter-spacing:-.01em;
+    margin-top:2px;
+  }
+  .score-block{margin-top:18px}
+  .score-top{display:flex;align-items:center;gap:14px}
+  .score-readout{
+    width:56px;height:56px;border-radius:50%;
+    background:var(--cell-empty);
+    display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:800;color:rgba(16,14,8,.65);
+    font-variant-numeric:tabular-nums;
+    flex-shrink:0;
+    transition:background .15s ease;
+  }
+  .score-readout.unset{color:var(--muted);font-weight:600}
+  .score-label{font-size:13px;color:var(--muted);line-height:1.4}
+  .score-label b{color:var(--ink);font-weight:600;display:block;font-size:14px}
+  .slider-wrap{margin-top:16px;padding:0 2px}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:30px;background:transparent;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:8px;border-radius:4px;
+    background:linear-gradient(90deg,
+      hsl(0 78% 52%), hsl(30 78% 52%), hsl(60 80% 50%),
+      hsl(90 70% 48%), hsl(120 70% 44%));
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:30px;height:30px;border-radius:50%;
+    background:var(--thumb,var(--thumb-unset));
+    border:3.5px solid var(--surface);
+    box-shadow:0 2px 8px rgba(0,0,0,.3);
+    margin-top:-11px;
+  }
+  input[type=range]::-moz-range-track{
+    height:8px;border-radius:4px;
+    background:linear-gradient(90deg,
+      hsl(0 78% 52%), hsl(30 78% 52%), hsl(60 80% 50%),
+      hsl(90 70% 48%), hsl(120 70% 44%));
+  }
+  input[type=range]::-moz-range-thumb{
+    width:23px;height:23px;border-radius:50%;
+    background:var(--thumb,var(--thumb-unset));
+    border:3.5px solid var(--surface);
+    box-shadow:0 2px 8px rgba(0,0,0,.3);
+  }
+  .scale-labels{
+    position:relative;height:16px;
+    font-size:11px;color:var(--muted);font-weight:600;
+    font-variant-numeric:tabular-nums;
+    margin-top:2px;
+  }
+  /* thumb center at value v sits at (v-1)/9 * (width - 30px thumb) + 15px */
+  .scale-labels span{position:absolute;top:0;transform:translateX(-50%)}
+  .scale-labels span:nth-child(1){left:15px}
+  .scale-labels span:nth-child(2){left:calc((100% - 30px)*0.44444 + 15px)}
+  .scale-labels span:nth-child(3){left:calc(100% - 15px)}
+  .clear-row{display:flex;justify-content:flex-end;min-height:30px}
+  .clear-score{font-size:13px;color:var(--muted);padding:4px 6px;text-decoration:underline;text-underline-offset:3px}
+  .clear-score[hidden]{display:none}
+
+  .summary-wrap{position:relative;margin-top:14px}
+  .summary-wrap input{
+    width:100%;
+    padding:12px 62px 12px 14px;
+    border:1px solid var(--hairline);
+    border-radius:12px;
+    background:var(--bg);color:var(--ink);
+    font-family:var(--ui);font-size:16px;
+  }
+  .summary-wrap input::placeholder{color:var(--muted)}
+  .char-count{
+    position:absolute;right:13px;top:50%;transform:translateY(-50%);
+    font-size:11px;color:var(--muted);font-weight:600;
+    font-variant-numeric:tabular-nums;
+    pointer-events:none;
+  }
+
+  textarea{
+    width:100%;
+    min-height:130px;
+    margin-top:10px;
+    padding:13px 14px;
+    border:1px solid var(--hairline);
+    border-radius:14px;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--ui);
+    font-size:16px;line-height:1.5;
+    resize:vertical;
+  }
+  textarea::placeholder{color:var(--muted)}
+  .sheet-actions{margin-top:14px}
+  .primary{
+    width:100%;
+    background:var(--accent);color:var(--bg);
+    font-size:17px;font-weight:700;
+    padding:14px;border-radius:14px;
+  }
+  .primary:active{filter:brightness(.92)}
+
+  /* ---------- backup modal ---------- */
+  .modal{
+    position:fixed;inset:0;z-index:60;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    background:var(--scrim);
+  }
+  .modal[hidden]{display:none}
+  .modal-card{
+    background:var(--surface);
+    border-radius:18px;
+    padding:20px;
+    width:100%;max-width:480px;
+    max-height:80dvh;overflow-y:auto;
+  }
+  .modal-card h3{font-family:var(--display);font-size:21px;font-weight:600}
+  .modal-card p{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .modal-card textarea{min-height:150px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace;margin-top:12px}
+  .modal-btns{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .modal-btns button{
+    flex:1;min-width:100px;
+    padding:11px;border-radius:12px;
+    font-size:14px;font-weight:600;
+    border:1px solid var(--hairline);
+  }
+  .modal-btns .primary-sm{background:var(--accent);color:var(--bg);border-color:transparent}
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom, 0px) + 28px);
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:var(--bg);
+    font-size:14px;font-weight:600;
+    padding:10px 22px;border-radius:999px;
+    opacity:0;pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease;
+    z-index:70;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (prefers-reduced-motion: reduce){
+    .sheet,.backdrop,.toast,.cell{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="top-row">
+      <span class="top-spacer" aria-hidden="true"></span>
+      <div class="wordmark">Lauren&rsquo;s Journal</div>
+      <button class="search-btn" id="searchBtn" aria-label="Search entries">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+      </button>
+    </div>
+    <div class="month-row">
+      <button class="nav" id="prevBtn" aria-label="Previous month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <h1 class="month-title"><span id="monthName"></span><span class="yr" id="yearNum"></span></h1>
+      <button class="nav" id="nextBtn" aria-label="Next month">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+    <div class="today-row"><button class="today-pill" id="todayBtn" hidden>Back to today</button></div>
+  </header>
+
+  <div class="weekdays">
+    <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+  </div>
+  <main class="grid" id="grid" aria-label="Calendar"></main>
+
+  <footer class="foot">
+    <button class="linkish" id="backupBtn">Back up or restore</button>
+  </footer>
+</div>
+
+<section class="search-view" id="searchView" hidden aria-label="Search entries">
+  <div class="search-bar">
+    <button class="nav" id="searchClose" aria-label="Close search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <input type="search" id="searchInput" placeholder="Search your journal&hellip;" autocomplete="off" autocorrect="off">
+  </div>
+  <div class="search-results" id="searchResults"></div>
+</section>
+
+<div class="backdrop" id="backdrop" hidden></div>
+<section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetDate">
+  <div class="grip"></div>
+  <div class="sheet-dow" id="sheetDow"></div>
+  <h2 class="sheet-date" id="sheetDate"></h2>
+
+  <div class="score-block">
+    <div class="score-top">
+      <div class="score-readout unset" id="scoreReadout">&ndash;</div>
+      <div class="score-label"><b id="scoreWord">No score yet</b>How was the day, 1&ndash;10?</div>
+    </div>
+    <div class="slider-wrap">
+      <input type="range" id="scoreSlider" min="1" max="10" step="1" value="5" aria-label="Day score, 1 to 10">
+      <div class="scale-labels"><span>1</span><span>5</span><span>10</span></div>
+    </div>
+    <div class="clear-row"><button class="clear-score" id="clearScore" hidden>Clear score</button></div>
+  </div>
+
+  <div class="summary-wrap">
+    <input type="text" id="summaryText" maxlength="50" placeholder="One-line summary&hellip;" autocomplete="off">
+    <span class="char-count" id="charCount">0/50</span>
+  </div>
+
+  <textarea id="entryText" placeholder="Write about the day&hellip;" rows="5"></textarea>
+
+  <div class="sheet-actions">
+    <button class="primary" id="saveBtn">Save</button>
+  </div>
+</section>
+
+<div class="modal" id="backupModal" hidden>
+  <div class="modal-card">
+    <h3>Back up &amp; restore</h3>
+    <p>Your journal lives only on this device. To back it up, copy the text below and keep it somewhere safe (notes, email to yourself). To restore or move devices, paste a backup here and tap Import.</p>
+    <textarea id="backupText" spellcheck="false"></textarea>
+    <div class="modal-btns">
+      <button id="copyBackup" class="primary-sm">Copy</button>
+      <button id="importBackup">Import</button>
+      <button id="closeBackup">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  var STORE_KEY = 'lj.entries.v1';
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DOWS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var SCORE_WORDS = {1:'Awful',2:'Very bad',3:'Bad',4:'Meh',5:'Okay',6:'Fine',7:'Good',8:'Very good',9:'Great',10:'Amazing'};
+
+  var SCROLL_SVG = '<svg class="scroll-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></svg>';
+
+  function loadEntries(){
+    try{
+      var raw = localStorage.getItem(STORE_KEY);
+      if(!raw) return {};
+      var data = JSON.parse(raw);
+      return (data && typeof data === 'object') ? data : {};
+    }catch(e){ return {}; }
+  }
+  function saveEntries(){
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(entries)); }
+    catch(e){ showToast('Could not save — storage unavailable'); }
+  }
+
+  var entries = loadEntries();
+  var now = new Date();
+  var view = { y: now.getFullYear(), m: now.getMonth() };
+  var todayKey = keyOf(now);
+  var selectedKey = null;
+  var pending = { s:null, t:'', m:'' };
+
+  function keyOf(d){
+    return d.getFullYear() + '-' +
+      String(d.getMonth()+1).padStart(2,'0') + '-' +
+      String(d.getDate()).padStart(2,'0');
+  }
+  function scoreColor(s){
+    var h = s <= 5 ? (s-1)*15 : 60 + (s-5)*12;
+    var sat = h > 60 ? 70 : 78;
+    var lit = h > 90 ? 46 : 52;
+    return 'hsl(' + h + ' ' + sat + '% ' + lit + '%)';
+  }
+
+  var $ = function(id){ return document.getElementById(id); };
+  var grid = $('grid'), sheet = $('sheet'), backdrop = $('backdrop');
+  var slider = $('scoreSlider'), readout = $('scoreReadout'), scoreWord = $('scoreWord');
+  var entryText = $('entryText'), clearBtn = $('clearScore');
+  var summaryText = $('summaryText'), charCount = $('charCount');
+
+  /* ---------- calendar rendering ---------- */
+  function render(){
+    todayKey = keyOf(new Date());
+    $('monthName').textContent = MONTHS[view.m];
+    $('yearNum').textContent = ' ' + view.y;
+
+    var tNow = new Date();
+    $('todayBtn').hidden = (view.y === tNow.getFullYear() && view.m === tNow.getMonth());
+
+    var first = new Date(view.y, view.m, 1);
+    var daysInMonth = new Date(view.y, view.m + 1, 0).getDate();
+    var lead = first.getDay();
+    var html = '';
+    var i;
+    for(i = 0; i < lead; i++) html += '<div class="cell blank" aria-hidden="true"></div>';
+
+    for(var d = 1; d <= daysInMonth; d++){
+      var key = view.y + '-' + String(view.m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      var e = entries[key];
+      var hasScore = e && typeof e.s === 'number';
+      var hasText = e && e.t && e.t.trim().length > 0;
+      var isToday = key === todayKey;
+      var isPast = key < todayKey;
+      var isFuture = key > todayKey;
+
+      var cls = 'cell';
+      var style = '';
+      if(hasScore){ cls += ' scored'; style = ' style="background:' + scoreColor(e.s) + '"'; }
+      else if(isFuture){ cls += ' future'; }
+      if(isToday){ cls += ' today'; if(!hasScore) cls += ' awaiting'; }
+
+      var hasSumm = e && e.m && e.m.trim().length > 0;
+      var inner = '<span class="num">' + d + '</span>';
+      if(hasText) inner += SCROLL_SVG;
+      if(hasSumm) inner += '<span class="summ">' + escHtml(e.m) + '</span>';
+      if(isPast && !hasScore) inner += '<span class="bang" aria-hidden="true">!</span>';
+
+      var label = MONTHS[view.m] + ' ' + d +
+        (hasScore ? ', scored ' + e.s : ', no score') +
+        (hasSumm ? ', ' + e.m : '') +
+        (hasText ? ', has entry' : '');
+      html += '<button class="' + cls + '"' + style + ' data-key="' + key + '" aria-label="' + escHtml(label) + '">' + inner + '</button>';
+    }
+    grid.innerHTML = html;
+    fitSummaries();
+  }
+
+  /* step summary text down in size until all 50 chars fit inside the cell */
+  function fitSummaries(){
+    var steps = ['long','xlong','xxlong'];
+    Array.prototype.forEach.call(grid.querySelectorAll('.summ'), function(el){
+      for(var i = 0; el.scrollHeight > el.clientHeight + 1 && i < steps.length; i++){
+        el.classList.add(steps[i]);
+      }
+      if(el.scrollHeight > el.clientHeight + 1){
+        var px = parseFloat(getComputedStyle(el).fontSize);
+        el.style.fontSize = (px * el.clientHeight / el.scrollHeight * 0.95) + 'px';
+      }
+    });
+  }
+
+  grid.addEventListener('click', function(ev){
+    var cell = ev.target.closest('.cell');
+    if(cell && cell.dataset.key) openDay(cell.dataset.key);
+  });
+
+  $('prevBtn').addEventListener('click', function(){ stepMonth(-1); });
+  $('nextBtn').addEventListener('click', function(){ stepMonth(1); });
+  $('todayBtn').addEventListener('click', function(){
+    var t = new Date();
+    view.y = t.getFullYear(); view.m = t.getMonth();
+    render();
+  });
+  function stepMonth(dir){
+    view.m += dir;
+    if(view.m < 0){ view.m = 11; view.y--; }
+    if(view.m > 11){ view.m = 0; view.y++; }
+    render();
+  }
+
+  /* swipe left/right to change months */
+  var touchX = null, touchY = null;
+  grid.addEventListener('touchstart', function(ev){
+    touchX = ev.touches[0].clientX; touchY = ev.touches[0].clientY;
+  }, {passive:true});
+  grid.addEventListener('touchend', function(ev){
+    if(touchX === null) return;
+    var dx = ev.changedTouches[0].clientX - touchX;
+    var dy = ev.changedTouches[0].clientY - touchY;
+    touchX = touchY = null;
+    if(Math.abs(dx) > 55 && Math.abs(dy) < 45) stepMonth(dx < 0 ? 1 : -1);
+  }, {passive:true});
+
+  /* ---------- day sheet ---------- */
+  function openDay(key){
+    selectedKey = key;
+    var e = entries[key] || {};
+    pending.s = (typeof e.s === 'number') ? e.s : null;
+    pending.t = e.t || '';
+    pending.m = e.m || '';
+    summaryText.value = pending.m;
+    charCount.textContent = pending.m.length + '/50';
+
+    var parts = key.split('-');
+    var d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+    $('sheetDow').textContent = DOWS[d.getDay()] + (key === todayKey ? ' · Today' : '');
+    $('sheetDate').textContent = MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+
+    entryText.value = pending.t;
+    syncScoreUI();
+
+    backdrop.hidden = false; sheet.hidden = false;
+    requestAnimationFrame(function(){
+      backdrop.classList.add('show'); sheet.classList.add('show');
+    });
+  }
+
+  function syncScoreUI(){
+    if(pending.s === null){
+      readout.textContent = '–';
+      readout.classList.add('unset');
+      readout.style.background = '';
+      scoreWord.textContent = 'No score yet';
+      slider.value = 5;
+      slider.style.removeProperty('--thumb');
+      clearBtn.hidden = true;
+    }else{
+      var c = scoreColor(pending.s);
+      readout.textContent = pending.s;
+      readout.classList.remove('unset');
+      readout.style.background = c;
+      scoreWord.textContent = SCORE_WORDS[pending.s];
+      slider.value = pending.s;
+      slider.style.setProperty('--thumb', c);
+      clearBtn.hidden = false;
+    }
+  }
+
+  slider.addEventListener('input', function(){
+    pending.s = +slider.value;
+    syncScoreUI();
+  });
+  clearBtn.addEventListener('click', function(){
+    pending.s = null;
+    syncScoreUI();
+  });
+  entryText.addEventListener('input', function(){ pending.t = entryText.value; });
+  summaryText.addEventListener('input', function(){
+    pending.m = summaryText.value.slice(0, 50);
+    charCount.textContent = pending.m.length + '/50';
+  });
+
+  function commit(){
+    if(!selectedKey) return;
+    var text = entryText.value.trim();
+    var summ = summaryText.value.trim().slice(0, 50);
+    if(pending.s === null && !text && !summ){
+      delete entries[selectedKey];
+    }else{
+      var rec = {};
+      if(pending.s !== null) rec.s = pending.s;
+      if(text) rec.t = text;
+      if(summ) rec.m = summ;
+      entries[selectedKey] = rec;
+    }
+    saveEntries();
+    render();
+    if(searchView && !searchView.hidden) runSearch();
+  }
+
+  function closeSheet(save){
+    if(save) commit();
+    backdrop.classList.remove('show'); sheet.classList.remove('show');
+    setTimeout(function(){ backdrop.hidden = true; sheet.hidden = true; }, 340);
+    selectedKey = null;
+  }
+
+  $('saveBtn').addEventListener('click', function(){
+    commit();
+    showToast('Saved');
+    closeSheet(false);
+  });
+  backdrop.addEventListener('click', function(){ closeSheet(true); });
+
+  /* ---------- backup / restore ---------- */
+  var backupModal = $('backupModal'), backupText = $('backupText');
+  $('backupBtn').addEventListener('click', function(){
+    backupText.value = JSON.stringify({ app:'laurens-journal', v:1, exported:new Date().toISOString(), entries:entries });
+    backupModal.hidden = false;
+  });
+  $('closeBackup').addEventListener('click', function(){ backupModal.hidden = true; });
+  backupModal.addEventListener('click', function(ev){ if(ev.target === backupModal) backupModal.hidden = true; });
+  $('copyBackup').addEventListener('click', function(){
+    backupText.select();
+    backupText.setSelectionRange(0, backupText.value.length);
+    var done = function(){ showToast('Copied — paste it somewhere safe'); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(backupText.value).then(done, function(){
+        document.execCommand('copy'); done();
+      });
+    }else{
+      document.execCommand('copy'); done();
+    }
+  });
+  $('importBackup').addEventListener('click', function(){
+    var raw = backupText.value.trim();
+    if(!raw){ showToast('Paste a backup first'); return; }
+    var data;
+    try{ data = JSON.parse(raw); }
+    catch(e){ showToast('That doesn’t look like a valid backup'); return; }
+    var incoming = (data && data.entries && typeof data.entries === 'object') ? data.entries : data;
+    var count = 0;
+    var clean = {};
+    for(var k in incoming){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) continue;
+      var v = incoming[k];
+      if(!v || typeof v !== 'object') continue;
+      var rec = {};
+      if(typeof v.s === 'number' && v.s >= 1 && v.s <= 10) rec.s = Math.round(v.s);
+      if(typeof v.t === 'string' && v.t.trim()) rec.t = v.t;
+      if(typeof v.m === 'string' && v.m.trim()) rec.m = v.m.trim().slice(0, 50);
+      if(rec.s !== undefined || rec.t !== undefined || rec.m !== undefined){ clean[k] = rec; count++; }
+    }
+    if(!count){ showToast('No entries found in that backup'); return; }
+    if(!window.confirm('Import ' + count + ' day(s)? They will be merged in; imported days replace existing ones.')) return;
+    for(var k2 in clean) entries[k2] = clean[k2];
+    saveEntries();
+    render();
+    backupModal.hidden = true;
+    showToast('Imported ' + count + ' day(s)');
+  });
+
+  /* ---------- search ---------- */
+  var searchView = $('searchView'), searchInput = $('searchInput'), searchResults = $('searchResults');
+  var searchTimer = null;
+
+  function escHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function escRe(s){
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function sentencesWith(text, terms){
+    var lower = text.toLowerCase(), ranges = [];
+    terms.forEach(function(term){
+      var i = 0, n = 0;
+      while((i = lower.indexOf(term, i)) !== -1 && n < 4){
+        var s = i, e = i + term.length;
+        while(s > 0 && !/[.!?\n]/.test(text[s-1])) s--;
+        while(e < text.length && !/[.!?\n]/.test(text[e])) e++;
+        if(e < text.length && /[.!?]/.test(text[e])) e++;
+        ranges.push([s, e, i]);
+        i += term.length; n++;
+      }
+    });
+    ranges.sort(function(a,b){ return a[0]-b[0]; });
+    var merged = [];
+    ranges.forEach(function(r){
+      var last = merged[merged.length-1];
+      if(last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+      else merged.push([r[0], r[1], r[2]]);
+    });
+    return merged.slice(0,3).map(function(r){
+      var sent = text.slice(r[0], r[1]).trim();
+      if(sent.length > 180){
+        var at = r[2] - r[0];
+        var from = Math.max(0, at - 60), to = Math.min(sent.length, at + 100);
+        sent = (from > 0 ? '…' : '') + sent.slice(from, to).trim() + (to < sent.length ? '…' : '');
+      }
+      return sent;
+    });
+  }
+
+  function highlight(s, terms){
+    var re = new RegExp('(' + terms.map(escRe).join('|') + ')', 'gi');
+    var probe = new RegExp('^(?:' + terms.map(escRe).join('|') + ')$', 'i');
+    return s.split(re).map(function(part){
+      return probe.test(part) ? '<mark>' + escHtml(part) + '</mark>' : escHtml(part);
+    }).join('');
+  }
+
+  function runSearch(){
+    var q = searchInput.value.trim().toLowerCase();
+    if(!q){
+      searchResults.innerHTML = '<div class="search-hint">Search every entry you&rsquo;ve written — try a name, a place, a feeling.</div>';
+      return;
+    }
+    var terms = q.split(/\s+/).filter(Boolean);
+    var keys = Object.keys(entries).filter(function(k){
+      var e = entries[k];
+      if(!e.t && !e.m) return false;
+      var lower = ((e.t || '') + '\n' + (e.m || '')).toLowerCase();
+      return terms.every(function(t){ return lower.indexOf(t) !== -1; });
+    }).sort().reverse();
+
+    if(!keys.length){
+      searchResults.innerHTML = '<div class="search-hint">No entries mention &ldquo;' + escHtml(searchInput.value.trim()) + '&rdquo;.</div>';
+      return;
+    }
+    var html = keys.map(function(k){
+      var e = entries[k];
+      var parts = k.split('-');
+      var d = new Date(+parts[0], +parts[1]-1, +parts[2]);
+      var hasScore = typeof e.s === 'number';
+      var chip = hasScore
+        ? '<div class="r-score" style="background:' + scoreColor(e.s) + '">' + e.s + '</div>'
+        : '<div class="r-score unscored">–</div>';
+      var snips = e.t ? sentencesWith(e.t, terms).map(function(sn){ return highlight(sn, terms); }).join(' <span style="opacity:.5">·</span> ') : '';
+      var summLine = e.m ? '<div class="r-summ">' + highlight(e.m, terms) + '</div>' : '';
+      return '<button class="result" data-key="' + k + '">' + chip +
+        '<div class="r-main"><div class="r-date">' + MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() +
+        ' <span class="r-dow">· ' + DOWS[d.getDay()] + '</span></div>' + summLine +
+        (snips ? '<div class="r-snippet">' + snips + '</div>' : '') + '</div></button>';
+    }).join('');
+    searchResults.innerHTML = html;
+  }
+
+  $('searchBtn').addEventListener('click', function(){
+    searchView.hidden = false;
+    runSearch();
+    searchInput.focus();
+  });
+  $('searchClose').addEventListener('click', function(){ searchView.hidden = true; });
+  searchInput.addEventListener('input', function(){
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 150);
+  });
+  searchResults.addEventListener('click', function(ev){
+    var row = ev.target.closest('.result');
+    if(!row) return;
+    var parts = row.dataset.key.split('-');
+    view.y = +parts[0]; view.m = +parts[1]-1;
+    render();
+    openDay(row.dataset.key);
+  });
+  document.addEventListener('keydown', function(ev){
+    if(ev.key !== 'Escape') return;
+    if(!sheet.hidden) closeSheet(true);
+    else if(!searchView.hidden) searchView.hidden = true;
+  });
+
+  /* ---------- toast ---------- */
+  var toastTimer = null;
+  function showToast(msg){
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 1900);
+  }
+
+  /* re-render when the app resumes on a new day */
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && keyOf(new Date()) !== todayKey) render();
+  });
+
+  render();
+
+  /* offline support when served over http(s) as a PWA */
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+    try{ navigator.serviceWorker.register('sw.js'); }catch(e){}
+  }
+})();
+</script>
+</body>
+</html>
